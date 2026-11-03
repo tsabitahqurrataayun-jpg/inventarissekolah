@@ -1,0 +1,168 @@
+.loan-form-panel input[type="file"],
+.return-evidence-form input[type="file"] {
+    width: 100%;
+    min-width: 180px;
+    padding: 8px;
+    border: 1px dashed #b8cadd;
+    border-radius: 7px;
+    background: #f7fbff;
+    color: #395570;
+    font-size: 11px;
+}
+
+.evidence-help,
+.evidence-error {
+    display: block;
+    margin-top: 4px;
+    font-size: 10px;
+}
+
+.evidence-help {
+    color: #71869b;
+}
+
+.evidence-error {
+    color: #bd4848;
+}
+
+.loan-evidence-links {
+    display: grid;
+    gap: 7px;
+    min-width: 145px;
+}
+
+.loan-evidence-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 7px 8px;
+    border: 1px solid #dce7f0;
+    border-radius: 8px;
+    background: #f7fbff;
+    color: #294766;
+    text-decoration: none;
+    transition: border-color .18s ease, background .18s ease, transform .18s ease;
+}
+
+.loan-evidence-link:hover {
+    transform: translateY(-1px);
+    border-color: #9fc4df;
+    background: #eef7ff;
+}
+
+.loan-evidence-link.returned {
+    border-color: #d8eadf;
+    background: #f6fbf7;
+}
+
+.loan-evidence-link.returned:hover {
+    border-color: #a9d2b8;
+    background: #eff9f2;
+}
+
+.loan-evidence-icon {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    flex: none;
+    place-items: center;
+    border-radius: 7px;
+    background: #e4f1fc;
+    color: #2875ae;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.loan-evidence-link.returned .loan-evidence-icon {
+    background: #e3f3e8;
+    color: #378453;
+}
+
+.loan-evidence-copy {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+}
+
+.loan-evidence-copy strong {
+    color: #294766;
+    font-size: 10px;
+    line-height: 1.25;
+}
+
+.loan-evidence-copy small {
+    color: #788da1;
+    font-size: 9px;
+    line-height: 1.25;
+    white-space: normal;
+}
+
+.loan-evidence-arrow {
+    margin-left: auto;
+    color: #7892a9;
+    font-size: 12px;
+}
+
+.loan-evidence-empty {
+    color: #8b9aaa;
+    font-size: 10px;
+}
+
+.return-evidence-form {
+    display: grid;
+    min-width: 190px;
+    gap: 7px;
+}
+
+.return-evidence-form label {
+    display: grid;
+    gap: 5px;
+    color: #526b82;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.return-evidence-form .mini-button {
+    white-space: normal;
+}
+
+.badge.return_pending {
+    background: #fff2d6;
+    color: #9a6500;
+}
+
+.admin-shell .request-actions {
+    min-width: 175px;
+    display: grid;
+    justify-items: stretch;
+    gap: 7px;
+}
+
+.admin-shell .request-actions .loan-evidence-links {
+    min-width: 0;
+}
+
+.admin-shell .request-actions form,
+.admin-shell .request-actions .request-button {
+    width: 100%;
+}
+
+.admin-shell .request-actions .badge {
+    justify-self: start;
+    white-space: normal;
+}
+
+@media (max-width: 760px) {
+    .loan-evidence-links {
+        min-width: 130px;
+    }
+
+    .loan-evidence-copy small {
+        display: none;
+    }
+
+    .admin-shell .request-actions {
+        min-width: 145px;
+    }
+}

@@ -1,0 +1,1 @@
+.user-shell .student-dashboard-grid,.admin-shell .admin-dashboard-grid{grid-template-columns:minmax(0,1fr) minmax(340px,380px);gap:16px}@media(max-width:900px){.user-shell .student-dashboard-grid,.admin-shell .admin-dashboard-grid{grid-template-columns:1fr}}
