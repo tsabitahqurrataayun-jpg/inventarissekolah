@@ -12,13 +12,18 @@
             <link rel="stylesheet" href="{{ asset('user.css') }}">
         @endif
     <link rel="stylesheet" href="{{ asset('return-schedule.css') }}">
-    <link rel="stylesheet" href="{{ asset('dashboard-layout.css') }}">
     <link rel="stylesheet" href="{{ asset('admin-actions.css') }}">
     <link rel="stylesheet" href="{{ asset('loan-request.css') }}">
     @endif
+    <link rel="stylesheet" href="{{ asset('dashboard-layout.css') }}">
     <link rel="stylesheet" href="{{ asset('inventory-page.css') }}">
     <link rel="stylesheet" href="{{ asset('loan-evidence.css') }}">
+    <link rel="stylesheet" href="{{ asset('stock-toast.css') }}">
+    <link rel="stylesheet" href="{{ asset('loan-confirmation.css') }}">
+    <link rel="stylesheet" href="{{ asset('rejection-dialog.css') }}">
     <link rel="stylesheet" href="{{ asset('responsive.css') }}">
+    <link rel="stylesheet" href="{{ asset('sidebar-nav.css') }}">
+    <link rel="stylesheet" href="{{ asset('dashboard-metrics.css') }}">
     <style>
         .admin-shell .content {
             background: #efefee;
@@ -257,6 +262,11 @@
             color: #667387;
             padding: 18px;
         }
+        .table-wrap .rejection-reason {
+            margin-top: 8px;
+            line-height: 1.5;
+            white-space: normal;
+        }
         @media (max-width: 900px) {
             .report-header-row {
                 flex-direction: column;
@@ -280,7 +290,7 @@
                 <a class="nav-link {{ request()->routeIs('loans.returned') ? 'active' : '' }}" href="{{ route('loans.returned') }}"><span>↩</span>Pengembalian</a>
                 <a class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" href="{{ route('reports.index') }}"><span>▥</span>Laporan</a>
             @else
-                <a class="nav-link {{ request()->routeIs('loans.create') ? 'active' : '' }}" href="{{ route('loans.create') }}"><span>♧</span>Katalog Alat</a>
+                <a class="nav-link {{ request()->routeIs('loans.create') ? 'active' : '' }}" href="{{ route('loans.create') }}"><span>♧</span>Ajukan Peminjaman</a>
                 <a class="nav-link {{ request()->routeIs('loans.index') ? 'active' : '' }}" href="{{ route('loans.index') }}"><span>↻</span>Pengajuan</a>
             @endif
         </nav>
@@ -291,16 +301,165 @@
     </aside>
     <button type="button" class="mobile-nav-backdrop" aria-label="Tutup menu navigasi" hidden></button>
     <main class="content">
-        <header class="topbar"><div><button type="button" class="mobile-menu-toggle" aria-label="Buka menu navigasi" aria-expanded="false" aria-controls="primary-navigation"><span></span><span></span><span></span></button><div class="topbar-page-title"><span class="breadcrumb">⌂ &nbsp; / &nbsp; Dashboard</span><h1>Dashboard</h1></div></div><div class="top-actions"><span class="role-pill">{{ auth()->user()->role === 'admin' ? 'Petugas Lab' : 'Siswa/Guru' }}</span><span class="notification">♧</span><div class="user-menu-trigger"><span class="avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span><strong>{{ auth()->user()->name }}</strong><span class="role-label">⌄</span></div></div></header>
+        <header class="topbar"><div><button type="button" class="mobile-menu-toggle" aria-label="Buka menu navigasi" aria-expanded="false" aria-controls="primary-navigation"><span></span><span></span><span></span></button><div class="topbar-page-title"><span class="breadcrumb">⌂ &nbsp; / &nbsp; Dashboard</span><h1>Dashboard</h1></div></div><div class="top-actions"><span class="role-pill">{{ ucfirst(auth()->user()->role) }}</span><span class="notification">♧</span><div class="user-menu-trigger"><span class="avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span><strong>{{ auth()->user()->name }}</strong><span class="role-label">⌄</span></div></div></header>
         @if(session('success'))<div class="flash success">{{ session('success') }}</div>@endif
+        @if(session('error'))<div class="flash error">{{ session('error') }}</div>@endif
         @if($errors->any())<div class="flash error">{{ $errors->first() }}</div>@endif
         {{ $slot ?? '' }}
         @yield('content')
     </main>
+    @if(auth()->user()->role === 'admin')
+        <div class="rejection-dialog" data-rejection-dialog hidden>
+            <section class="rejection-dialog-panel" role="dialog" aria-modal="true" aria-labelledby="rejection-dialog-title" aria-describedby="rejection-dialog-description">
+                <span class="rejection-dialog-icon" aria-hidden="true">!</span>
+                <h2 id="rejection-dialog-title">Tolak pengajuan peminjaman?</h2>
+                <p id="rejection-dialog-description">Tuliskan alasan agar siswa atau guru mengetahui mengapa peminjaman tidak diterima.</p>
+                <label for="rejection-reason-input">Alasan penolakan</label>
+                <textarea id="rejection-reason-input" data-rejection-reason maxlength="1000" rows="4" placeholder="Contoh: stok barang sedang digunakan untuk kegiatan lain"></textarea>
+                <small class="rejection-dialog-error" data-rejection-error hidden>Alasan penolakan wajib diisi.</small>
+                <div class="rejection-dialog-actions">
+                    <button type="button" class="rejection-dialog-cancel" data-rejection-cancel>Batal</button>
+                    <button type="button" class="rejection-dialog-confirm" data-rejection-confirm>Tolak peminjaman</button>
+                </div>
+            </section>
+        </div>
+        <div class="loan-confirmation" data-approval-confirmation hidden>
+            <section class="loan-confirmation-dialog" role="dialog" aria-modal="true" aria-labelledby="approval-confirmation-title" aria-describedby="approval-confirmation-description">
+                <span class="loan-confirmation-icon" aria-hidden="true">?</span>
+                <h3 id="approval-confirmation-title">Konfirmasi penerimaan</h3>
+                <p id="approval-confirmation-description">Apakah kamu benar ingin menerima peminjaman tersebut?</p>
+                <div class="loan-confirmation-actions">
+                    <button type="button" class="loan-confirmation-no" data-approval-confirmation-no>Tidak</button>
+                    <button type="button" class="loan-confirmation-yes" data-approval-confirmation-yes>Ya, terima</button>
+                </div>
+            </section>
+        </div>
+    @endif
 </div>
 
 <script>
+    function requestApprovalConfirmation(event) {
+        const form = event.currentTarget;
+
+        if (form.dataset.approvalConfirmed === 'true') {
+            delete form.dataset.approvalConfirmed;
+            return true;
+        }
+
+        event.preventDefault();
+        window.openApprovalConfirmation(form, event.submitter);
+
+        return false;
+    }
+
+    function requestRejectionReason(event) {
+        const form = event.currentTarget;
+
+        if (form.dataset.rejectionConfirmed === 'true') {
+            delete form.dataset.rejectionConfirmed;
+            return true;
+        }
+
+        event.preventDefault();
+        window.openRejectionDialog(form, event.submitter);
+
+        return false;
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
+        const rejectionDialog = document.querySelector('[data-rejection-dialog]');
+        if (rejectionDialog) {
+            const rejectionInput = rejectionDialog.querySelector('[data-rejection-reason]');
+            const rejectionError = rejectionDialog.querySelector('[data-rejection-error]');
+            const confirmButton = rejectionDialog.querySelector('[data-rejection-confirm]');
+            let rejectionForm = null;
+            let rejectionTrigger = null;
+
+            window.openRejectionDialog = function (form, trigger) {
+                rejectionForm = form;
+                rejectionTrigger = trigger;
+                rejectionInput.value = '';
+                rejectionError.hidden = true;
+                rejectionDialog.hidden = false;
+                rejectionInput.focus();
+            };
+
+            const closeRejectionDialog = function () {
+                rejectionDialog.hidden = true;
+                rejectionForm = null;
+                if (rejectionTrigger) rejectionTrigger.focus();
+                rejectionTrigger = null;
+            };
+
+            rejectionDialog.querySelector('[data-rejection-cancel]').addEventListener('click', closeRejectionDialog);
+            rejectionDialog.addEventListener('click', function (event) {
+                if (event.target === rejectionDialog) closeRejectionDialog();
+            });
+            confirmButton.addEventListener('click', function () {
+                const reason = rejectionInput.value.trim();
+                if (!reason) {
+                    rejectionError.hidden = false;
+                    rejectionInput.focus();
+                    return;
+                }
+
+                let reasonField = rejectionForm.querySelector('[name="rejection_reason"]');
+                if (!reasonField) {
+                    reasonField = document.createElement('input');
+                    reasonField.type = 'hidden';
+                    reasonField.name = 'rejection_reason';
+                    rejectionForm.appendChild(reasonField);
+                }
+
+                reasonField.value = reason;
+                const formToSubmit = rejectionForm;
+                rejectionDialog.hidden = true;
+                rejectionForm = null;
+                rejectionTrigger = null;
+                formToSubmit.dataset.rejectionConfirmed = 'true';
+                formToSubmit.requestSubmit();
+            });
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !rejectionDialog.hidden) closeRejectionDialog();
+            });
+        }
+
+        const approvalConfirmation = document.querySelector('[data-approval-confirmation]');
+        if (approvalConfirmation) {
+            let approvalForm = null;
+            let approvalTrigger = null;
+
+            window.openApprovalConfirmation = function (form, trigger) {
+                approvalForm = form;
+                approvalTrigger = trigger;
+                approvalConfirmation.hidden = false;
+                approvalConfirmation.querySelector('[data-approval-confirmation-no]').focus();
+            };
+
+            const closeApprovalConfirmation = function () {
+                approvalConfirmation.hidden = true;
+                approvalForm = null;
+                if (approvalTrigger) approvalTrigger.focus();
+                approvalTrigger = null;
+            };
+
+            approvalConfirmation.querySelector('[data-approval-confirmation-no]').addEventListener('click', closeApprovalConfirmation);
+            approvalConfirmation.addEventListener('click', function (event) {
+                if (event.target === approvalConfirmation) closeApprovalConfirmation();
+            });
+            approvalConfirmation.querySelector('[data-approval-confirmation-yes]').addEventListener('click', function () {
+                const formToSubmit = approvalForm;
+                approvalConfirmation.hidden = true;
+                approvalForm = null;
+                approvalTrigger = null;
+                formToSubmit.dataset.approvalConfirmed = 'true';
+                formToSubmit.requestSubmit();
+            });
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !approvalConfirmation.hidden) closeApprovalConfirmation();
+            });
+        }
+
         const menuToggle = document.querySelector('.mobile-menu-toggle');
         const backdrop = document.querySelector('.mobile-nav-backdrop');
 

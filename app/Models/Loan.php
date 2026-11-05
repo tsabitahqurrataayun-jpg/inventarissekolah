@@ -14,7 +14,7 @@ class Loan extends Model
     protected $fillable = [
         'user_id', 'inventory_id', 'quantity', 'borrowed_at', 'due_at',
         'returned_at', 'status', 'notes', 'borrowing_evidence_path',
-        'return_evidence_path',
+        'return_evidence_path', 'rejection_reason',
     ];
 
     protected function casts(): array

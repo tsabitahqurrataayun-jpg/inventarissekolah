@@ -19,8 +19,57 @@ class ReportPageTest extends TestCase
         $this->actingAs($admin)
             ->get('/dashboard')
             ->assertOk()
+            ->assertSee('sidebar-nav.css')
+            ->assertSee('dashboard-metrics.css')
+            ->assertSee('Apakah kamu benar ingin menerima peminjaman tersebut?')
+            ->assertSee('data-approval-confirmation-yes', false)
+            ->assertSee('data-approval-confirmation-no', false)
             ->assertSee('Selamat pagi, Admin SIPARIS')
+            ->assertSee('class="role-pill">Admin</span>', false)
+            ->assertSee('class="admin-metric metric-link" href="http://localhost/inventaris"', false)
+            ->assertSee('class="admin-metric metric-link" href="http://localhost/peminjaman"', false)
             ->assertDontSee('Selamat pagi, Admin Sarana');
+    }
+
+    public function test_student_dashboard_metrics_link_to_relevant_pages(): void
+    {
+        $student = User::factory()->create(['role' => 'siswa']);
+
+        $this->actingAs($student)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('class="role-pill">Siswa</span>', false)
+            ->assertSee('class="student-metric metric-link" href="http://localhost/peminjaman/baru"', false)
+            ->assertSee('class="student-metric metric-link" href="http://localhost/peminjaman"', false);
+    }
+
+    public function test_admin_dashboard_shows_unreturned_loans_before_confirmed_returns(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $borrower = User::factory()->create(['role' => 'guru', 'name' => 'Bu Rina']);
+        $borrowedItem = Inventory::factory()->create(['name' => 'Speaker Belum Kembali']);
+        $returnedItem = Inventory::factory()->create(['name' => 'Speaker Sudah Kembali']);
+
+        Loan::factory()->create([
+            'user_id' => $borrower->id,
+            'inventory_id' => $borrowedItem->id,
+            'status' => 'borrowed',
+            'due_at' => today()->addDays(2),
+        ]);
+        Loan::factory()->create([
+            'user_id' => $borrower->id,
+            'inventory_id' => $returnedItem->id,
+            'status' => 'returned',
+            'returned_at' => now(),
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('Status Peminjaman Terbaru')
+            ->assertSee('Barang yang belum dikembalikan ditampilkan terlebih dahulu')
+            ->assertSee('Belum dikembalikan · jatuh tempo')
+            ->assertSeeInOrder(['Speaker Belum Kembali', 'Speaker Sudah Kembali']);
     }
 
     public function test_admin_can_view_laporan_page_with_loan_statistics(): void

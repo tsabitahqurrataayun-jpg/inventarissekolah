@@ -19,7 +19,4 @@
             <span class="loan-evidence-arrow" aria-hidden="true">↗</span>
         </a>
     @endif
-    @if(!$loan->borrowing_evidence_path && !$loan->return_evidence_path)
-        <span class="loan-evidence-empty">Belum ada bukti</span>
-    @endif
 </div>

@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Inventory;
 use App\Models\Loan;
-use Illuminate\View\View;
 use Illuminate\Support\Carbon;
+use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
@@ -16,8 +16,19 @@ class DashboardController extends Controller
             ? Loan::query()
             : $user->loans();
         $loans = $user->role === 'admin'
-            ? Loan::with(['user', 'inventory'])->latest()->take(6)->get()
+            ? Loan::with(['user', 'inventory'])
+                ->orderByRaw("CASE WHEN status IN ('approved', 'borrowed', 'return_pending') THEN 0 WHEN status = 'returned' THEN 2 ELSE 1 END")
+                ->latest()
+                ->take(6)
+                ->get()
             : $user->loans()->with('inventory')->latest()->take(6)->get();
+        $overdueLoans = $user->role === 'admin'
+            ? Loan::with(['user', 'inventory'])
+                ->whereIn('status', ['approved', 'borrowed'])
+                ->whereDate('due_at', '<', today())
+                ->orderBy('due_at')
+                ->get()
+            : collect();
 
         return view('dashboard', [
             'inventoryCount' => Inventory::count(),
@@ -40,6 +51,7 @@ class DashboardController extends Controller
                 ->get(['due_at'])
                 ->groupBy(fn (Loan $loan): string => $loan->due_at->format('Y-m-d'))
                 ->map->count(),
+            'overdueLoans' => $overdueLoans,
             'loans' => $loans,
         ]);
     }

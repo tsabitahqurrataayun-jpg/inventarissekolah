@@ -21,6 +21,7 @@
                     <th>Peminjam</th>
                 @endif
                 <th>Jumlah</th>
+                <th>Tanggal pinjam</th>
                 <th>Jatuh tempo</th>
                 <th>Status</th>
                 <th>Bukti</th>
@@ -38,8 +39,17 @@
                         <td>{{ $loan->user?->name ?? '-' }}</td>
                     @endif
                     <td>{{ $loan->quantity }} unit</td>
+                    <td>{{ $loan->borrowed_at?->format('d M Y') ?? '-' }}</td>
                     <td>{{ $loan->due_at->format('d M Y') }}</td>
-                    <td><span class="badge {{ $loan->status }}">{{ $loan->status_label }}</span></td>
+                    <td>
+                        <span class="badge {{ $loan->status }}">{{ $loan->status_label }}</span>
+                        @if(in_array($loan->status, ['approved', 'borrowed'], true) && $loan->due_at->isBefore(today()))
+                            <small class="overdue-label">Belum dikembalikan · terlambat</small>
+                        @endif
+                        @if($loan->status === 'rejected' && $loan->rejection_reason)
+                            <small class="rejection-reason">Alasan penolakan: {{ $loan->rejection_reason }}</small>
+                        @endif
+                    </td>
                     <td>
                         @include('components.loan-evidence-links', ['loan' => $loan])
                     </td>
@@ -47,13 +57,13 @@
                         @if(auth()->user()->role === 'admin')
                             @if($loan->status === 'pending')
                                 <div class="inline-actions">
-                                    <form method="POST" action="{{ route('loans.status', $loan) }}">
+                                    <form method="POST" action="{{ route('loans.status', $loan) }}" onsubmit="return requestApprovalConfirmation(event)">
                                         @csrf
                                         @method('PATCH')
                                         <input type="hidden" name="status" value="approved">
                                         <button class="mini-button approve">Setujui pinjaman</button>
                                     </form>
-                                    <form method="POST" action="{{ route('loans.status', $loan) }}">
+                                    <form method="POST" action="{{ route('loans.status', $loan) }}" onsubmit="return requestRejectionReason(event)">
                                         @csrf
                                         @method('PATCH')
                                         <input type="hidden" name="status" value="rejected">
@@ -89,7 +99,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="{{ auth()->user()->role === 'admin' ? 7 : 6 }}" class="empty">Belum ada data peminjaman.</td>
+                    <td colspan="{{ auth()->user()->role === 'admin' ? 8 : 7 }}" class="empty">Belum ada data peminjaman.</td>
                 </tr>
             @endforelse
         </tbody>

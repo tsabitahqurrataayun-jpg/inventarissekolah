@@ -89,11 +89,11 @@ class LoanController extends Controller
         $status = $request->query('status', 'all');
         $loans = $this->loanReportQuery($status)->with(['user', 'inventory'])->latest()->get();
         $statusSlug = array_key_exists($status, $this->reportStatusLabels()) ? $status : 'all';
-        $fileName = 'rekap-peminjaman-' . $statusSlug . '.csv';
+        $fileName = 'rekap-peminjaman-'.$statusSlug.'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Content-Disposition' => 'attachment; filename="'.$fileName.'"',
         ];
 
         $callback = function () use ($loans) {
@@ -119,7 +119,7 @@ class LoanController extends Controller
                     $loan->user?->role ?? 'siswa',
                     $this->safeSpreadsheetText($loan->inventory?->name ?? '-'),
                     $this->safeSpreadsheetText($loan->inventory?->code ?? '-'),
-                    $loan->quantity . ' unit',
+                    $loan->quantity.' unit',
                     $loan->borrowed_at?->format('d/m/Y') ?? '-',
                     $loan->due_at?->format('d/m/Y') ?? '-',
                     $loan->returned_at?->format('d/m/Y') ?? '-',
@@ -196,20 +196,21 @@ class LoanController extends Controller
         $data = $request->validate([
             'inventory_id' => ['required', 'exists:inventories,id'],
             'quantity' => ['required', 'integer', 'min:1'],
-            'due_at' => ['required', 'date', 'after_or_equal:today'],
+            'borrowed_at' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
+            'due_at' => ['required', 'date_format:Y-m-d', 'after_or_equal:borrowed_at'],
             'notes' => ['nullable', 'string', 'max:500'],
-            'borrowing_evidence' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
         $inventory = Inventory::findOrFail($data['inventory_id']);
-        abort_if($data['quantity'] > $inventory->available_stock, 422, 'Jumlah melebihi stok tersedia.');
-        $evidencePath = $request->file('borrowing_evidence')->store('loan-evidence/borrowing', 'local');
-        abort_if($evidencePath === false, 500, 'Bukti peminjaman gagal disimpan. Silakan coba lagi.');
-        unset($data['borrowing_evidence']);
+        if ($data['quantity'] > $inventory->available_stock) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'quantity' => "Tidak bisa mengajukan {$data['quantity']} unit {$inventory->name}. Barang yang tersedia hanya {$inventory->available_stock} unit.",
+                ]);
+        }
         Loan::create($data + [
             'user_id' => auth()->id(),
-            'borrowed_at' => now(),
             'status' => 'pending',
-            'borrowing_evidence_path' => $evidencePath,
         ]);
 
         return redirect()->route('loans.index')->with('success', 'Pengajuan peminjaman dikirim untuk ditinjau admin.');
@@ -223,9 +224,11 @@ class LoanController extends Controller
             'return_evidence' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
-        DB::transaction(function () use ($loan, $data) {
+        $returnRequested = DB::transaction(function () use ($loan, $data): bool {
             $lockedLoan = Loan::whereKey($loan->id)->lockForUpdate()->firstOrFail();
-            abort_unless(in_array($lockedLoan->status, ['approved', 'borrowed'], true), 422, 'Barang ini tidak sedang berstatus dipinjam.');
+            if (! in_array($lockedLoan->status, ['approved', 'borrowed'], true)) {
+                return false;
+            }
 
             $evidencePath = $data['return_evidence']->store('loan-evidence/return', 'local');
             abort_if($evidencePath === false, 500, 'Bukti pengembalian gagal disimpan. Silakan coba lagi.');
@@ -234,7 +237,13 @@ class LoanController extends Controller
                 'return_evidence_path' => $evidencePath,
                 'status' => 'return_pending',
             ]);
+
+            return true;
         });
+
+        if (! $returnRequested) {
+            return redirect()->route('loans.index')->with('error', 'Bukti pengembalian sudah dikirim atau peminjaman ini tidak lagi aktif. Silakan tunggu verifikasi admin.');
+        }
 
         return redirect()->route('loans.index')->with('success', 'Bukti pengembalian dikirim. Stok akan diperbarui setelah admin memverifikasi barang.');
     }
@@ -259,7 +268,10 @@ class LoanController extends Controller
 
     public function updateStatus(Request $request, Loan $loan): RedirectResponse
     {
-        $data = $request->validate(['status' => ['required', 'in:approved,rejected,borrowed,returned']]);
+        $data = $request->validate([
+            'status' => ['required', 'in:approved,rejected,borrowed,returned'],
+            'rejection_reason' => ['required_if:status,rejected', 'nullable', 'string', 'max:1000'],
+        ]);
         DB::transaction(function () use ($loan, $data) {
             $loan = Loan::whereKey($loan->id)->lockForUpdate()->firstOrFail();
             $oldStatus = $loan->status;
@@ -283,6 +295,9 @@ class LoanController extends Controller
             }
             abort_if($newStatus === 'approved' && $oldStatus !== 'pending', 422, 'Pengajuan ini tidak lagi menunggu verifikasi.');
             $loan->status = $newStatus;
+            if ($newStatus === 'rejected') {
+                $loan->rejection_reason = $data['rejection_reason'];
+            }
             $loan->save();
         });
 
