@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Rekap Peminjaman {{ $statusLabel }} | SIPARIS</title>
+    <link rel="stylesheet" href="{{ asset('report-charts.css') }}">
     <style>
         :root {
             color: #172b45;
@@ -226,6 +227,8 @@
         <div><span>Jumlah transaksi</span><strong>{{ $loans->count() }}</strong></div>
         <div><span>Total barang dipinjam</span><strong>{{ $totalQuantity }} unit</strong></div>
     </section>
+
+    @include('reports.analytics')
 
     <table>
         <thead>

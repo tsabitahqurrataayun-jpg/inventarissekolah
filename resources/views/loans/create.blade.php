@@ -16,17 +16,20 @@
             <div>
                 <h3>Detail peminjaman</h3>
                 <p>Isi data berikut agar pengajuan dapat segera diverifikasi.</p>
+                @if(auth()->user()->role === 'siswa')
+                    <p class="student-loan-limit-note" role="status">Maksimal 3 unit per pengajuan.</p>
+                @endif
             </div>
             <span class="form-step">01 / 03</span>
         </div>
-        <form method="POST" action="{{ route('loans.store') }}" class="form-grid" data-loan-request-form>
+        <form method="POST" action="{{ route('loans.store') }}" class="form-grid" data-loan-request-form data-student-unit-limit="{{ auth()->user()->role === 'siswa' ? 3 : 0 }}">
             @csrf
             <label class="wide">
                 Inventaris
                 <select name="inventory_id" required data-inventory-select>
                     <option value="">Pilih barang</option>
                     @foreach($inventories as $inventory)
-                        <option value="{{ $inventory->id }}" data-available-stock="{{ $inventory->available_stock }}" data-inventory-name="{{ $inventory->name }}" @selected(old('inventory_id') == $inventory->id)>
+                        <option value="{{ $inventory->id }}" data-available-stock="{{ $inventory->available_stock }}" data-inventory-name="{{ $inventory->name }}" @selected(old('inventory_id', request()->query('inventory_id')) == $inventory->id)>
                             {{ $inventory->name }} · {{ $inventory->available_stock }} unit tersedia
                         </option>
                     @endforeach
@@ -75,9 +78,12 @@
     </aside>
 </div>
 
-<div class="stock-toast" data-stock-toast role="status" aria-live="polite" aria-atomic="true" hidden>
+<div class="stock-toast{{ $errors->has('quantity') ? ' visible' : '' }}" data-stock-toast role="status" aria-live="polite" aria-atomic="true" @if(!$errors->has('quantity')) hidden @endif>
     <span class="stock-toast-icon" aria-hidden="true">!</span>
-    <div><strong>Stok tidak mencukupi</strong><p data-stock-toast-message></p></div>
+    <div>
+        <strong data-stock-toast-title>{{ $errors->has('quantity') ? 'Periksa jumlah peminjaman' : 'Stok tidak mencukupi' }}</strong>
+        <p data-stock-toast-message>{{ $errors->first('quantity') }}</p>
+    </div>
     <button type="button" data-stock-toast-close aria-label="Tutup notifikasi">&times;</button>
 </div>
 
@@ -99,7 +105,9 @@
         const inventorySelect = loanRequestForm.querySelector('[data-inventory-select]');
         const quantityInput = loanRequestForm.querySelector('[data-loan-quantity]');
         const stockToast = document.querySelector('[data-stock-toast]');
+        const stockToastTitle = stockToast.querySelector('[data-stock-toast-title]');
         const stockToastMessage = stockToast.querySelector('[data-stock-toast-message]');
+        const studentUnitLimit = Number(loanRequestForm.dataset.studentUnitLimit);
         const confirmation = document.querySelector('[data-loan-confirmation]');
         const confirmationNo = confirmation.querySelector('[data-loan-confirmation-no]');
         const confirmationYes = confirmation.querySelector('[data-loan-confirmation-yes]');
@@ -108,7 +116,8 @@
         let lastStockWarning = '';
         let confirmationAccepted = false;
 
-        const showStockToast = function (message) {
+        const showStockToast = function (message, title) {
+            stockToastTitle.textContent = title;
             stockToastMessage.textContent = message;
             stockToast.hidden = false;
             stockToast.classList.remove('visible');
@@ -144,16 +153,31 @@
 
             const warning = `Tidak bisa mengajukan ${quantity} unit ${selectedInventory.dataset.inventoryName}. Barang yang tersedia hanya ${availableStock} unit.`;
             if (warning !== lastStockWarning) {
-                showStockToast(warning);
+                showStockToast(warning, 'Stok tidak mencukupi');
                 lastStockWarning = warning;
             }
 
             return false;
         };
 
+        const checkStudentUnitLimit = function () {
+            const quantity = Number(quantityInput.value);
+            if (!studentUnitLimit || !quantity || quantity <= studentUnitLimit) {
+                return true;
+            }
+
+            showStockToast('Siswa hanya dapat meminjam maksimal 3 unit barang dalam satu pengajuan.', 'Melebihi batas peminjaman');
+            return false;
+        };
+
         inventorySelect.addEventListener('change', checkAvailableStock);
         quantityInput.addEventListener('input', checkAvailableStock);
         loanRequestForm.addEventListener('submit', function (event) {
+            if (!checkStudentUnitLimit()) {
+                event.preventDefault();
+                return;
+            }
+
             if (!checkAvailableStock()) {
                 event.preventDefault();
                 return;

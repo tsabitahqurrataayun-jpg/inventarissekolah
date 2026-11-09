@@ -11,30 +11,24 @@ class StudentAccountsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_seeded_students_can_log_in_with_the_shared_password(): void
+    public function test_only_the_retained_student_account_is_seeded_with_a_no_space_password(): void
     {
         $this->seed();
 
-        $students = User::where('role', 'siswa')
-            ->where('email', '!=', 'siswa@sekolah.id')
-            ->get();
+        $student = User::where('email', 'siswa@sekolah.id')->firstOrFail();
+        $this->assertSame('Alya Pratama', $student->name);
+        $this->assertTrue(Hash::check('siswasmkn5', $student->password));
+        $this->assertSame(1, User::where('role', 'siswa')->count());
+        $this->assertDatabaseMissing('users', ['email' => 'citra.lestari@sekolah.id']);
 
-        $this->assertCount(10, $students);
-
-        foreach ($students as $student) {
-            $this->assertTrue(Hash::check('siswa smkn5', $student->password));
-        }
-
-        $this->followingRedirects()->get('/')
+        $this->get('/login')
             ->assertOk()
-            ->assertSee('citra.lestari@sekolah.id')
-            ->assertSee('rizky.ramadhan@sekolah.id');
-
-        $student = $students->firstWhere('email', 'citra.lestari@sekolah.id');
+            ->assertDontSee('citra.lestari@sekolah.id')
+            ->assertDontSee('Daftar email siswa');
 
         $this->post('/login', [
-            'email' => $student->email,
-            'password' => 'siswa smkn5',
+            'email' => 'siswa@sekolah.id',
+            'password' => 'siswasmkn5',
             'remember' => 'on',
         ])->assertRedirect('/dashboard');
 

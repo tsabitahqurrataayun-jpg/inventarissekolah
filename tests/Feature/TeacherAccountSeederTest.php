@@ -18,7 +18,7 @@ class TeacherAccountSeederTest extends TestCase
             'name' => 'Bima Santoso',
             'email' => 'guru@sekolah.id',
             'role' => 'guru',
-            'password' => 'guru smkn5',
+            'password' => 'gurusmkn5',
         ]);
         $loan = Loan::factory()->create(['user_id' => $teacher->id]);
 
@@ -30,13 +30,13 @@ class TeacherAccountSeederTest extends TestCase
         $this->assertSame('Dwi Esti', $teacher->name);
         $this->assertSame('dwiesti@sekolah.id', $teacher->email);
         $this->assertSame('guru', $teacher->role);
-        $this->assertTrue(Hash::check('guru smkn5', $teacher->password));
+        $this->assertTrue(Hash::check('gurusmkn5', $teacher->password));
         $this->assertSame($teacher->id, $loan->user_id);
         $this->assertDatabaseMissing('users', ['email' => 'guru@sekolah.id']);
 
         $this->post('/login', [
             'email' => 'dwiesti@sekolah.id',
-            'password' => 'guru smkn5',
+            'password' => 'gurusmkn5',
             'remember' => 'on',
         ])->assertRedirect('/dashboard');
 

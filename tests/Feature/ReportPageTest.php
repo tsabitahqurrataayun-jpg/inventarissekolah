@@ -43,6 +43,33 @@ class ReportPageTest extends TestCase
             ->assertSee('class="student-metric metric-link" href="http://localhost/peminjaman"', false);
     }
 
+    public function test_dashboard_calendar_dates_show_due_loan_details(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $borrower = User::factory()->create(['role' => 'guru', 'name' => 'Guru Kalender']);
+        $inventory = Inventory::factory()->create(['name' => 'Laptop Jatuh Tempo']);
+        $dueDate = today()->startOfMonth()->addDays(10);
+
+        Loan::factory()->create([
+            'user_id' => $borrower->id,
+            'inventory_id' => $inventory->id,
+            'quantity' => 2,
+            'status' => 'borrowed',
+            'due_at' => $dueDate,
+        ]);
+
+        $this->actingAs($admin)
+            ->get('/dashboard')
+            ->assertOk()
+            ->assertSee('return-date-dialog.css')
+            ->assertSee('data-return-date-button', false)
+            ->assertSee('data-due-date="'.$dueDate->format('Y-m-d').'"', false)
+            ->assertSee('Laptop Jatuh Tempo')
+            ->assertSee('Guru Kalender')
+            ->assertSee('2 unit')
+            ->assertSee('JATUH TEMPO PEMINJAMAN');
+    }
+
     public function test_admin_dashboard_shows_unreturned_loans_before_confirmed_returns(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
@@ -99,6 +126,10 @@ class ReportPageTest extends TestCase
             ->get('/laporan')
             ->assertOk()
             ->assertSee('Laporan Peminjaman')
+            ->assertSee('Diagram status peminjaman')
+            ->assertSee('Tren transaksi 6 bulan')
+            ->assertSee('Barang paling sering dipinjam')
+            ->assertSee('Laptop Lenovo ThinkPad')
             ->assertSee('Menunggu Verifikasi')
             ->assertSee('Dikembalikan');
     }
@@ -124,6 +155,9 @@ class ReportPageTest extends TestCase
             ->assertSee('Alya Pratama')
             ->assertSee('Laptop HP')
             ->assertSee('2 unit')
+            ->assertSee('Diagram status peminjaman')
+            ->assertSee('Grafik batang jumlah transaksi dalam enam bulan terakhir')
+            ->assertSee('Barang paling sering dipinjam')
             ->assertSee('Cetak / Simpan PDF')
             ->assertDontSee('Data Inventaris');
     }

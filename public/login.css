@@ -473,6 +473,16 @@ input {
     font-size: 11px;
 }
 
+.login-status {
+    margin: -8px 0 17px;
+    padding: 10px;
+    border-radius: 7px;
+    background: #e8f5ed;
+    color: #34744b;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
 @media (max-width: 760px) {
     .siparis-login {
         padding: 0;

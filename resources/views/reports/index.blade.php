@@ -6,7 +6,7 @@
         <div>
             <p class="eyebrow">REKAPITULASI</p>
             <h2>Laporan Peminjaman</h2>
-            <p class="muted">Tinjau data peminjaman, lalu cetak sebagai PDF atau buka rekap di Excel.</p>
+            <p class="muted">Lihat diagram dan ringkasan data peminjaman, lalu cetak sebagai PDF atau buka rekap di Excel.</p>
         </div>
 
         <div class="report-actions">
@@ -33,6 +33,8 @@
             <strong>{{ $stats['late'] }}</strong>
         </div>
     </div>
+
+    @include('reports.analytics')
 
     <div class="report-toolbar">
         <div class="status-filters">

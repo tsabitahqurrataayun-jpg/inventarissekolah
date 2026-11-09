@@ -43,6 +43,7 @@ class LoanController extends Controller
         $query = $this->loanReportQuery($status);
 
         $loans = $query->with(['user', 'inventory'])->latest()->get();
+        $analytics = $this->reportAnalytics();
 
         $stats = [
             'total' => Loan::count(),
@@ -67,6 +68,7 @@ class LoanController extends Controller
             'status' => $status,
             'statusLabel' => $statusLabel[$status] ?? 'Semua',
             'stats' => $stats,
+            'analytics' => $analytics,
             'currentStatus' => $status,
         ]);
     }
@@ -79,9 +81,71 @@ class LoanController extends Controller
         return view('reports.print', [
             'loans' => $loans,
             'statusLabel' => $this->reportStatusLabels()[$status] ?? 'Semua',
+            'analytics' => $this->reportAnalytics(),
             'totalQuantity' => $loans->sum('quantity'),
             'printedAt' => now()->translatedFormat('d F Y, H:i'),
         ]);
+    }
+
+    private function reportAnalytics(): array
+    {
+        $statusCounts = Loan::query()
+            ->select('status', DB::raw('COUNT(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $statusGroups = [
+            ['label' => 'Dipinjam', 'color' => '#32805b', 'statuses' => ['approved', 'borrowed']],
+            ['label' => 'Dikembalikan', 'color' => '#3978c5', 'statuses' => ['returned']],
+            ['label' => 'Menunggu verifikasi', 'color' => '#d79a2b', 'statuses' => ['pending', 'return_pending']],
+            ['label' => 'Ditolak', 'color' => '#cf5656', 'statuses' => ['rejected']],
+        ];
+        $statusData = collect($statusGroups)->map(function (array $group) use ($statusCounts): array {
+            $group['count'] = collect($group['statuses'])->sum(fn (string $status): int => (int) ($statusCounts[$status] ?? 0));
+            unset($group['statuses']);
+
+            return $group;
+        });
+        $statusTotal = $statusData->sum('count');
+        $statusData = $statusData->map(function (array $group) use ($statusTotal): array {
+            $group['percentage'] = $statusTotal > 0 ? round($group['count'] / $statusTotal * 100) : 0;
+
+            return $group;
+        });
+
+        $firstMonth = now()->startOfMonth()->subMonths(5);
+        $monthlyCounts = Loan::query()
+            ->whereDate('borrowed_at', '>=', $firstMonth->toDateString())
+            ->whereDate('borrowed_at', '<=', now()->toDateString())
+            ->pluck('borrowed_at')
+            ->countBy(fn ($date): string => \Illuminate\Support\Carbon::parse($date)->format('Y-m'));
+
+        $monthlyData = collect(range(0, 5))->map(function (int $offset) use ($firstMonth, $monthlyCounts): array {
+            $month = $firstMonth->copy()->addMonths($offset);
+
+            return [
+                'label' => $month->translatedFormat('M'),
+                'count' => (int) ($monthlyCounts[$month->format('Y-m')] ?? 0),
+            ];
+        });
+
+        $topItems = Inventory::query()
+            ->join('loans', 'inventories.id', '=', 'loans.inventory_id')
+            ->whereIn('loans.status', ['approved', 'borrowed', 'returned'])
+            ->select('inventories.name', 'inventories.category', DB::raw('SUM(loans.quantity) as quantity'))
+            ->groupBy('inventories.id', 'inventories.name', 'inventories.category')
+            ->orderByDesc('quantity')
+            ->orderBy('inventories.name')
+            ->limit(5)
+            ->get();
+
+        return [
+            'statuses' => $statusData,
+            'statusTotal' => $statusTotal,
+            'months' => $monthlyData,
+            'monthlyMax' => max(1, (int) $monthlyData->max('count')),
+            'topItems' => $topItems,
+        ];
     }
 
     public function exportReport(Request $request)
@@ -188,17 +252,26 @@ class LoanController extends Controller
 
     public function create(): View
     {
-        return view('loans.create', ['inventories' => Inventory::where('available_stock', '>', 0)->orderBy('name')->get()]);
+        return view('loans.create', [
+            'inventories' => Inventory::where('available_stock', '>', 0)->orderBy('name')->get(),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $quantityRules = ['required', 'integer', 'min:1'];
+        if ($request->user()->role === 'siswa') {
+            $quantityRules[] = 'max:3';
+        }
+
         $data = $request->validate([
             'inventory_id' => ['required', 'exists:inventories,id'],
-            'quantity' => ['required', 'integer', 'min:1'],
+            'quantity' => $quantityRules,
             'borrowed_at' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
             'due_at' => ['required', 'date_format:Y-m-d', 'after_or_equal:borrowed_at'],
             'notes' => ['nullable', 'string', 'max:500'],
+        ], [
+            'quantity.max' => 'Siswa hanya dapat meminjam maksimal 3 unit barang dalam satu pengajuan.',
         ]);
         $inventory = Inventory::findOrFail($data['inventory_id']);
         if ($data['quantity'] > $inventory->available_stock) {
@@ -209,7 +282,7 @@ class LoanController extends Controller
                 ]);
         }
         Loan::create($data + [
-            'user_id' => auth()->id(),
+            'user_id' => $request->user()->id,
             'status' => 'pending',
         ]);
 

@@ -14,12 +14,12 @@ class LoginRememberRequiredTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'admin@sekolah.id',
-            'password' => 'admin siparis',
+            'password' => 'adminsiparis',
         ]);
 
         $response = $this->from('/login')->post('/login', [
             'email' => $user->email,
-            'password' => 'admin siparis',
+            'password' => 'adminsiparis',
         ]);
 
         $response->assertRedirect('/login');
@@ -30,12 +30,12 @@ class LoginRememberRequiredTest extends TestCase
     {
         $user = User::factory()->create([
             'email' => 'dwiesti@sekolah.id',
-            'password' => 'guru smkn5',
+            'password' => 'gurusmkn5',
         ]);
 
         $response = $this->from('/login')->post('/login', [
             'email' => $user->email,
-            'password' => 'guru smkn5',
+            'password' => 'gurusmkn5',
             'remember' => 'on',
         ]);
 

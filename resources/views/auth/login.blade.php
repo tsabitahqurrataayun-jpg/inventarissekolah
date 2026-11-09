@@ -18,6 +18,7 @@
             <div class="login-panel-inner">
                 <div class="login-intro"><p class="login-kicker">RUANG PENGGUNA</p><h2>Selamat datang.</h2><p>Masuk untuk melanjutkan ke sistem peminjaman inventaris.</p></div>
                 @if($errors->any())<div class="login-error">{{ $errors->first() }}</div>@endif
+                @if(session('status'))<div class="login-status" role="status">{{ session('status') }}</div>@endif
                 <form method="POST" action="{{ route('login') }}" class="login-fields">
                     @csrf
                     <label>Username / Email<input type="email" name="email" value="{{ old('email') }}" placeholder="nama@sekolah.id" required autofocus></label>
@@ -39,17 +40,8 @@
                         });
                     });
                 </script>
-                @if(isset($studentEmails) && $studentEmails->isNotEmpty())
-                    <details class="student-accounts">
-                        <summary>Daftar email siswa (password: siswa smkn5)</summary>
-                        <ul>
-                            @foreach($studentEmails as $email)
-                                <li>{{ $email }}</li>
-                            @endforeach
-                        </ul>
-                    </details>
-                @endif
-                <p class="login-help">Belum punya akun? <a href="{{ route('register') }}">Hubungi admin</a></p>
+                <p class="login-help"><a href="{{ route('password.request') }}">Lupa sandi?</a></p>
+                <p class="login-help">Belum punya akun? <a href="{{ route('register') }}">Buat akun</a></p>
                 <small class="login-copyright">SIPARIS · SISTEM INVENTARIS SEKOLAH</small>
             </div>
         </section>

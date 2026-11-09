@@ -25,10 +25,29 @@
                 @endfor
                 @for($day = 1; $day <= $calendarMonth->daysInMonth; $day++)
                     @php($dateKey = $calendarMonth->copy()->day($day)->format('Y-m-d'))
-                    <span class="calendar-day {{ $dateKey === today()->format('Y-m-d') ? 'today' : '' }} {{ $returnDates->has($dateKey) ? 'has-return' : '' }}">
-                        {{ $day }}
-                        @if($returnDates->has($dateKey))<b>{{ $returnDates->get($dateKey) }}</b>@endif
-                    </span>
+                    @if($returnDates->has($dateKey))
+                        @php($dateLoans = $calendarReturns->get($dateKey))
+                        @php($returnDetails = $dateLoans->map(fn ($loan) => [
+                            'item' => $loan->inventory->name,
+                            'quantity' => $loan->quantity,
+                            'borrower' => auth()->user()->role === 'admin' ? $loan->user->name : null,
+                            'status' => $loan->status_label,
+                        ])->values())
+                        <button
+                            type="button"
+                            class="calendar-day has-return {{ $dateKey === today()->format('Y-m-d') ? 'today' : '' }}"
+                            data-return-date-button
+                            data-due-date="{{ $dateKey }}"
+                            data-date-label="{{ $calendarMonth->copy()->day($day)->translatedFormat('l, d F Y') }}"
+                            data-return-details="{{ $returnDetails->toJson() }}"
+                            aria-label="{{ $returnDates->get($dateKey) }} peminjaman jatuh tempo {{ $calendarMonth->copy()->day($day)->translatedFormat('l, d F Y') }}"
+                            title="Lihat peminjaman jatuh tempo"
+                        >
+                            {{ $day }}<b>{{ $returnDates->get($dateKey) }}</b>
+                        </button>
+                    @else
+                        <span class="calendar-day {{ $dateKey === today()->format('Y-m-d') ? 'today' : '' }}">{{ $day }}</span>
+                    @endif
                 @endfor
             </div>
         </div>
@@ -52,6 +71,19 @@
     </div>
 
     <div class="reminder-note"><span>i</span><div><strong>Pengingat pengembalian</strong><small>Aktifkan ikon bintang pada barang agar browser mengingatkan jadwalnya.</small></div></div>
+
+    <dialog class="return-date-dialog" data-return-date-dialog aria-labelledby="return-date-dialog-title">
+        <div class="return-date-dialog-content">
+            <div class="return-date-dialog-heading">
+                <div>
+                    <p>JATUH TEMPO PEMINJAMAN</p>
+                    <h2 id="return-date-dialog-title" data-return-date-title></h2>
+                </div>
+                <button type="button" class="return-date-dialog-close" data-close-return-dialog aria-label="Tutup">×</button>
+            </div>
+            <div class="return-date-dialog-list" data-return-date-list></div>
+        </div>
+    </dialog>
 </aside>
 
 <script>
@@ -74,6 +106,48 @@
                 localStorage.setItem(key, active ? '1' : '0');
                 updateButton(active);
             });
+        });
+
+        const returnDialog = document.querySelector('[data-return-date-dialog]');
+        const returnDialogTitle = returnDialog.querySelector('[data-return-date-title]');
+        const returnDialogList = returnDialog.querySelector('[data-return-date-list]');
+
+        document.querySelectorAll('[data-return-date-button]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                returnDialogTitle.textContent = button.dataset.dateLabel;
+                returnDialogList.replaceChildren();
+
+                JSON.parse(button.dataset.returnDetails).forEach(function (loan) {
+                    const item = document.createElement('article');
+                    item.className = 'return-date-loan';
+
+                    const name = document.createElement('strong');
+                    name.textContent = loan.item;
+                    item.append(name);
+
+                    const details = document.createElement('p');
+                    details.textContent = loan.quantity + ' unit' + (loan.borrower ? ' · ' + loan.borrower : '');
+                    item.append(details);
+
+                    const status = document.createElement('span');
+                    status.textContent = loan.status;
+                    item.append(status);
+
+                    returnDialogList.append(item);
+                });
+
+                returnDialog.showModal();
+            });
+        });
+
+        returnDialog.querySelector('[data-close-return-dialog]').addEventListener('click', function () {
+            returnDialog.close();
+        });
+
+        returnDialog.addEventListener('click', function (event) {
+            if (event.target === returnDialog) {
+                returnDialog.close();
+            }
         });
     });
 </script>

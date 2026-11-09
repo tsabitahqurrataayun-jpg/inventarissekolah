@@ -13,6 +13,10 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/lupa-sandi', [AuthController::class, 'showForgotPassword'])->name('password.request');
+    Route::post('/lupa-sandi', [AuthController::class, 'sendPasswordResetLink'])->name('password.email');
+    Route::get('/reset-sandi/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
+    Route::post('/reset-sandi', [AuthController::class, 'resetPassword'])->name('password.update');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
 });
@@ -20,6 +24,8 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/katalog', [InventoryController::class, 'catalog'])->middleware('role:siswa,guru')->name('inventories.catalog');
+    Route::get('/inventaris/{inventory}/foto', [InventoryController::class, 'image'])->name('inventories.image');
     Route::get('/laporan', [LoanController::class, 'report'])->middleware('role:admin')->name('reports.index');
     Route::get('/laporan/cetak', [LoanController::class, 'printReport'])->middleware('role:admin')->name('reports.print');
     Route::get('/laporan/export', [LoanController::class, 'exportReport'])->middleware('role:admin')->name('reports.export');

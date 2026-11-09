@@ -19,13 +19,13 @@
             <span class="inventory-card-icon" aria-hidden="true">+</span>
         </div>
 
-        <form method="POST" action="{{ route('inventories.store') }}" class="inventory-form-grid">
+        <form method="POST" action="{{ route('inventories.store') }}" class="inventory-form-grid" enctype="multipart/form-data">
             @csrf
             <label>Kode aset
-                <input name="code" placeholder="AST-001" required>
+                <input name="code" placeholder="AST-020" required>
             </label>
             <label>Nama barang
-                <input name="name" placeholder="Proyektor Epson" required>
+                <input name="name" placeholder="Nama barang" required>
             </label>
             <label>Kategori
                 <input name="category" placeholder="Elektronik" required>
@@ -39,6 +39,10 @@
                     <option>Perlu perawatan</option>
                     <option>Rusak</option>
                 </select>
+            </label>
+            <label>Foto barang
+                <input type="file" name="image" accept="image/jpeg,image/png,image/webp" required>
+                <small class="inventory-image-hint">Format JPG, PNG, atau WEBP. Maksimal 5 MB.</small>
             </label>
             <div class="inventory-form-actions">
                 <button class="inventory-submit" type="submit">Tambah inventaris <span aria-hidden="true">+</span></button>
@@ -60,6 +64,7 @@
                 <thead>
                     <tr>
                         <th>Aset</th>
+                        <th>Foto</th>
                         <th>Kategori</th>
                         <th>Stok tersedia</th>
                         <th>Kondisi</th>
@@ -72,6 +77,25 @@
                             <td class="inventory-asset">
                                 <strong>{{ $inventory->name }}</strong>
                                 <small>{{ $inventory->code }}</small>
+                            </td>
+                            <td>
+                                @if($inventory->image_path)
+                                    <img class="inventory-admin-thumbnail" src="{{ route('inventories.image', $inventory) }}" alt="Foto {{ $inventory->name }}">
+                                @else
+                                    <form method="POST" action="{{ route('inventories.update', $inventory) }}" enctype="multipart/form-data" class="inventory-photo-upload">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="name" value="{{ $inventory->name }}">
+                                        <input type="hidden" name="category" value="{{ $inventory->category }}">
+                                        <input type="hidden" name="total_stock" value="{{ $inventory->total_stock }}">
+                                        <input type="hidden" name="condition" value="{{ $inventory->condition }}">
+                                        <label class="inventory-photo-upload-label">
+                                            <span>Unggah foto</span>
+                                            <input type="file" name="image" accept="image/jpeg,image/png,image/webp" required>
+                                        </label>
+                                        <button class="inventory-photo-save" type="submit">Simpan</button>
+                                    </form>
+                                @endif
                             </td>
                             <td>{{ $inventory->category }}</td>
                             <td>
@@ -95,7 +119,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="inventory-empty">Belum ada inventaris. Tambahkan data pertama melalui formulir di atas.</td>
+                            <td colspan="6" class="inventory-empty">Belum ada inventaris. Tambahkan data pertama melalui formulir di atas.</td>
                         </tr>
                     @endforelse
                 </tbody>

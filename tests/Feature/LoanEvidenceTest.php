@@ -103,6 +103,94 @@ class LoanEvidenceTest extends TestCase
         $this->assertDatabaseCount('loans', 0);
     }
 
+    public function test_student_can_request_three_units_even_with_three_other_active_requests(): void
+    {
+        $student = User::factory()->create(['role' => 'siswa']);
+        $inventory = Inventory::factory()->create(['total_stock' => 5, 'available_stock' => 5]);
+
+        foreach (['pending', 'borrowed', 'return_pending'] as $status) {
+            Loan::factory()->create([
+                'user_id' => $student->id,
+                'inventory_id' => Inventory::factory()->create()->id,
+                'status' => $status,
+            ]);
+        }
+
+        $this->actingAs($student)
+            ->get('/peminjaman/baru')
+            ->assertOk()
+            ->assertSee('Maksimal 3 unit per pengajuan.')
+            ->assertSee('data-student-unit-limit="3"', false);
+
+        $this->post('/peminjaman', [
+            'inventory_id' => $inventory->id,
+            'quantity' => 3,
+            'borrowed_at' => today()->toDateString(),
+            'due_at' => today()->addDays(3)->toDateString(),
+        ])
+            ->assertRedirect('/peminjaman');
+
+        $this->assertDatabaseCount('loans', 4);
+        $this->assertDatabaseHas('loans', [
+            'user_id' => $student->id,
+            'inventory_id' => $inventory->id,
+            'quantity' => 3,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_students_cannot_request_more_than_three_units_in_one_loan(): void
+    {
+        $student = User::factory()->create(['role' => 'siswa']);
+        $inventory = Inventory::factory()->create(['total_stock' => 5, 'available_stock' => 5]);
+
+        $this->from('/peminjaman/baru')
+            ->actingAs($student)
+            ->post('/peminjaman', [
+                'inventory_id' => $inventory->id,
+                'quantity' => 4,
+                'borrowed_at' => today()->toDateString(),
+                'due_at' => today()->addDays(3)->toDateString(),
+            ])
+            ->assertRedirect('/peminjaman/baru')
+            ->assertSessionHasErrors([
+                'quantity' => 'Siswa hanya dapat meminjam maksimal 3 unit barang dalam satu pengajuan.',
+            ]);
+
+        $this->get('/peminjaman/baru')
+            ->assertOk()
+            ->assertSee('class="stock-toast visible"', false)
+            ->assertSee('Siswa hanya dapat meminjam maksimal 3 unit barang dalam satu pengajuan.');
+
+        $this->assertDatabaseCount('loans', 0);
+    }
+
+    public function test_teachers_can_request_more_than_three_units(): void
+    {
+        $teacher = User::factory()->create(['role' => 'guru']);
+        $inventory = Inventory::factory()->create(['total_stock' => 5, 'available_stock' => 5]);
+
+        $this->actingAs($teacher)
+            ->get('/peminjaman/baru')
+            ->assertOk()
+            ->assertSee('data-student-unit-limit="0"', false)
+            ->assertDontSee('Maksimal 3 unit per pengajuan.');
+
+        $this->post('/peminjaman', [
+            'inventory_id' => $inventory->id,
+            'quantity' => 4,
+            'borrowed_at' => today()->toDateString(),
+            'due_at' => today()->addDays(3)->toDateString(),
+        ])->assertRedirect('/peminjaman');
+
+        $this->assertDatabaseCount('loans', 1);
+        $this->assertDatabaseHas('loans', [
+            'user_id' => $teacher->id,
+            'inventory_id' => $inventory->id,
+            'quantity' => 4,
+        ]);
+    }
+
     public function test_admin_dashboard_notifies_about_loans_past_the_due_date(): void
     {
         $this->travelTo(today()->startOfDay());

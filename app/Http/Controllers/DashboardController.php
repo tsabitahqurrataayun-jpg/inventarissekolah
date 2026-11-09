@@ -29,6 +29,11 @@ class DashboardController extends Controller
                 ->orderBy('due_at')
                 ->get()
             : collect();
+        $calendarReturns = (clone $loanScope)->with(['user', 'inventory'])
+            ->whereIn('status', ['approved', 'borrowed'])
+            ->whereBetween('due_at', [Carbon::today()->startOfMonth(), Carbon::today()->endOfMonth()])
+            ->get()
+            ->groupBy(fn (Loan $loan): string => $loan->due_at->format('Y-m-d'));
 
         return view('dashboard', [
             'inventoryCount' => Inventory::count(),
@@ -46,11 +51,8 @@ class DashboardController extends Controller
                 ->take(6)
                 ->get(),
             'calendarMonth' => Carbon::today()->startOfMonth(),
-            'returnDates' => (clone $loanScope)->whereIn('status', ['approved', 'borrowed'])
-                ->whereBetween('due_at', [Carbon::today()->startOfMonth(), Carbon::today()->endOfMonth()])
-                ->get(['due_at'])
-                ->groupBy(fn (Loan $loan): string => $loan->due_at->format('Y-m-d'))
-                ->map->count(),
+            'calendarReturns' => $calendarReturns,
+            'returnDates' => $calendarReturns->map->count(),
             'overdueLoans' => $overdueLoans,
             'loans' => $loans,
         ]);

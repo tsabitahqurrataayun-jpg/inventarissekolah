@@ -40,10 +40,6 @@
     box-shadow: 0 4px 14px rgba(20, 42, 68, .045);
 }
 
-.inventory-form-card {
-    max-width: 920px;
-}
-
 .inventory-card-header {
     display: flex;
     align-items: center;
@@ -310,16 +306,237 @@
     background: #ffebe9;
 }
 
+.inventory-image-hint {
+    color: #788595;
+    font-size: 11px;
+    font-weight: 400;
+}
+
+.inventory-admin-thumbnail {
+    display: block;
+    width: 64px;
+    height: 48px;
+    border-radius: 7px;
+    object-fit: cover;
+}
+
+.inventory-photo-upload {
+    display: grid;
+    justify-items: start;
+    gap: 5px;
+}
+
+.inventory-photo-upload-label {
+    display: grid;
+    gap: 4px;
+    color: #526174;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.inventory-photo-upload-label input {
+    max-width: 180px;
+    color: #788595;
+    font-size: 10px;
+}
+
+.inventory-photo-save {
+    padding: 5px 8px;
+    border: 1px solid #dbe5ef;
+    border-radius: 6px;
+    background: #f3f7fb;
+    color: #0d2a4a;
+    font-size: 10px;
+    font-weight: 700;
+}
+
 .inventory-table-wrap .inventory-empty {
     padding: 30px 18px;
     color: #788595;
     text-align: center;
 }
 
+.inventory-catalog-page .inventory-page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.inventory-catalog-request-link,
+.inventory-order-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: 1px solid #0d2a4a;
+    border-radius: 8px;
+    background: #0d2a4a;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    text-decoration: none;
+    transition: background .18s ease, transform .18s ease;
+}
+
+.inventory-catalog-request-link {
+    min-height: 40px;
+    padding: 0 15px;
+    white-space: nowrap;
+}
+
+.inventory-order-button {
+    width: 100%;
+    min-height: 40px;
+    margin-top: 16px;
+    padding: 0 12px;
+}
+
+.inventory-order-button:not(:disabled):hover,
+.inventory-catalog-request-link:hover {
+    transform: translateY(-1px);
+    background: #173e67;
+}
+
+.inventory-order-button:disabled {
+    cursor: not-allowed;
+    border-color: #d7dde4;
+    background: #eef1f4;
+    color: #7a8794;
+}
+
+.inventory-catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 18px;
+}
+
+.inventory-catalog-card {
+    overflow: hidden;
+    border: 1px solid #dfe4ea;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(20, 42, 68, .045);
+}
+
+.inventory-catalog-image {
+    display: block;
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    background: #f1f4f7;
+}
+
+.inventory-catalog-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #718092;
+}
+
+.inventory-catalog-placeholder span {
+    color: #9aa8b7;
+    font-size: 38px;
+}
+
+.inventory-catalog-placeholder small {
+    font-size: 11px;
+}
+
+.inventory-catalog-details {
+    padding: 15px;
+}
+
+.inventory-catalog-category {
+    color: #718092;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.inventory-catalog-details h3 {
+    margin: 6px 0 0;
+    color: #1e3550;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.inventory-catalog-code {
+    margin: 4px 0 0;
+    color: #8793a1;
+    font-size: 11px;
+}
+
+.inventory-catalog-description {
+    margin: 10px 0 0;
+    color: #526174;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.inventory-catalog-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 12px;
+    color: #718092;
+    font-size: 10px;
+}
+
+.inventory-catalog-stock {
+    font-weight: 800;
+}
+
+.inventory-catalog-stock.available {
+    color: #28764c;
+}
+
+.inventory-catalog-stock.unavailable {
+    color: #b84f4d;
+}
+
+.inventory-catalog-empty {
+    grid-column: 1 / -1;
+    padding: 50px 20px;
+    border: 1px dashed #cfd7df;
+    border-radius: 12px;
+    background: #fff;
+    color: #718092;
+    text-align: center;
+}
+
+.inventory-catalog-empty > span {
+    font-size: 32px;
+}
+
+.inventory-catalog-empty h3 {
+    margin: 10px 0 4px;
+    color: #1e3550;
+    font-size: 16px;
+}
+
+.inventory-catalog-empty p {
+    margin: 0;
+    font-size: 12px;
+}
+
 @media (max-width: 640px) {
     .inventory-page {
         gap: 14px;
         padding-top: 4px;
+    }
+
+    .inventory-catalog-page .inventory-page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .inventory-catalog-request-link {
+        width: 100%;
     }
 
     .inventory-card-header {

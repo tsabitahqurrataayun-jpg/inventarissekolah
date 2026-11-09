@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="{{ asset('admin-actions.css') }}">
     <link rel="stylesheet" href="{{ asset('loan-request.css') }}">
     @endif
+    <link rel="stylesheet" href="{{ asset('return-date-dialog.css') }}">
     <link rel="stylesheet" href="{{ asset('dashboard-layout.css') }}">
     <link rel="stylesheet" href="{{ asset('inventory-page.css') }}">
     <link rel="stylesheet" href="{{ asset('loan-evidence.css') }}">
@@ -24,6 +25,7 @@
     <link rel="stylesheet" href="{{ asset('responsive.css') }}">
     <link rel="stylesheet" href="{{ asset('sidebar-nav.css') }}">
     <link rel="stylesheet" href="{{ asset('dashboard-metrics.css') }}">
+    <link rel="stylesheet" href="{{ asset('report-charts.css') }}">
     <style>
         .admin-shell .content {
             background: #efefee;
@@ -290,6 +292,7 @@
                 <a class="nav-link {{ request()->routeIs('loans.returned') ? 'active' : '' }}" href="{{ route('loans.returned') }}"><span>↩</span>Pengembalian</a>
                 <a class="nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}" href="{{ route('reports.index') }}"><span>▥</span>Laporan</a>
             @else
+                <a class="nav-link {{ request()->routeIs('inventories.catalog') ? 'active' : '' }}" href="{{ route('inventories.catalog') }}"><span>▤</span>Daftar Inventaris</a>
                 <a class="nav-link {{ request()->routeIs('loans.create') ? 'active' : '' }}" href="{{ route('loans.create') }}"><span>♧</span>Ajukan Peminjaman</a>
                 <a class="nav-link {{ request()->routeIs('loans.index') ? 'active' : '' }}" href="{{ route('loans.index') }}"><span>↻</span>Pengajuan</a>
             @endif

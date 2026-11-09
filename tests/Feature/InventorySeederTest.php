@@ -15,11 +15,11 @@ class InventorySeederTest extends TestCase
         $this->seed();
 
         $expectedStock = [
+            'AST-001' => 4,
             'AST-006' => 3,
             'AST-007' => 10,
             'AST-008' => 20,
             'AST-009' => 10,
-            'AST-010' => 3,
             'AST-011' => 3,
             'AST-012' => 1,
             'AST-013' => 30,
@@ -38,5 +38,7 @@ class InventorySeederTest extends TestCase
         }
 
         $this->assertSame('Obeng mini (1 set)', Inventory::where('code', 'AST-012')->value('name'));
+        $this->assertSame('Proyektor Epson', Inventory::where('code', 'AST-001')->value('name'));
+        $this->assertSame(0, Inventory::whereIn('code', ['AST-003', 'AST-010', 'AST-019'])->count());
     }
 }

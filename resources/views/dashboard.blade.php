@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('content')
 @if(auth()->user()->role !== 'admin')
-    <section class="student-welcome"><div><p class="student-kicker">DASHBOARD {{ strtoupper(auth()->user()->role) }}</p><h2>Selamat pagi, {{ auth()->user()->name }}</h2><p>Pantau inventaris dan seluruh aktivitas peminjaman hari ini.</p></div><div class="student-actions"><a href="{{ route('loans.create') }}" class="student-catalog">Lihat Katalog</a><a href="{{ route('loans.create') }}" class="button student-loan-button">Ajukan Pinjaman</a></div></section>
+    <section class="student-welcome"><div><p class="student-kicker">DASHBOARD {{ strtoupper(auth()->user()->role) }}</p><h2>Selamat pagi, {{ auth()->user()->name }}</h2><p>Pantau inventaris dan seluruh aktivitas peminjaman hari ini.</p></div><div class="student-actions"><a href="{{ route('inventories.catalog') }}" class="student-catalog">Lihat Katalog</a><a href="{{ route('loans.create') }}" class="button student-loan-button">Ajukan Pinjaman</a></div></section>
     <section class="student-metrics">
         <a class="student-metric metric-link" href="{{ route('loans.create') }}"><span class="student-metric-icon navy">▣</span><div><small>Total Alat</small><strong>{{ $inventoryCount }}</strong><em>{{ $inventoryCount > 0 ? $inventoryCount : 0 }} kategori</em></div></a>
         <a class="student-metric metric-link" href="{{ route('loans.index') }}"><span class="student-metric-icon cyan">▣</span><div><small>Sedang Dipinjam</small><strong>{{ $activeLoans }}</strong><em>Unit aktif</em></div></a>

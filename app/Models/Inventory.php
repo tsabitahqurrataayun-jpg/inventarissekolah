@@ -12,7 +12,7 @@ class Inventory extends Model
 
     protected $fillable = [
         'code', 'name', 'category', 'description', 'total_stock',
-        'available_stock', 'condition',
+        'available_stock', 'condition', 'image_path',
     ];
 
     public function loans(): HasMany
