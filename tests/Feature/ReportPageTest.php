@@ -137,7 +137,11 @@ class ReportPageTest extends TestCase
     public function test_admin_can_open_a_print_ready_filtered_report(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        $borrower = User::factory()->create(['role' => 'siswa', 'name' => 'Alya Pratama']);
+        $borrower = User::factory()->create([
+            'role' => 'siswa',
+            'name' => 'Alya Pratama',
+            'class' => 'XI RPL 1',
+        ]);
         $inventory = Inventory::factory()->create(['name' => 'Laptop HP', 'code' => 'AST-006']);
 
         Loan::factory()->create([
@@ -145,6 +149,7 @@ class ReportPageTest extends TestCase
             'inventory_id' => $inventory->id,
             'quantity' => 2,
             'status' => 'pending',
+            'borrower_phone' => '081234567890',
         ]);
 
         $this->actingAs($admin)
@@ -165,7 +170,11 @@ class ReportPageTest extends TestCase
     public function test_excel_csv_export_is_readable_and_obeys_the_status_filter(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
-        $borrower = User::factory()->create(['role' => 'siswa', 'name' => 'Alya Pratama']);
+        $borrower = User::factory()->create([
+            'role' => 'siswa',
+            'name' => 'Alya Pratama',
+            'class' => 'XI RPL 1',
+        ]);
         $inventory = Inventory::factory()->create(['name' => 'Laptop HP', 'code' => 'AST-006']);
 
         Loan::factory()->create([
@@ -173,6 +182,7 @@ class ReportPageTest extends TestCase
             'inventory_id' => $inventory->id,
             'quantity' => 2,
             'status' => 'pending',
+            'borrower_phone' => '081234567890',
         ]);
         Loan::factory()->create([
             'user_id' => $borrower->id,
@@ -196,6 +206,8 @@ class ReportPageTest extends TestCase
             'No',
             'Nama Peminjam',
             'Peran',
+            'Kelas',
+            'Nomor Telepon',
             'Nama Inventaris',
             'Kode Inventaris',
             'Jumlah',
@@ -205,9 +217,11 @@ class ReportPageTest extends TestCase
             'Status',
         ], $rows[0]);
         $this->assertSame('Alya Pratama', $rows[1][1]);
-        $this->assertSame('Laptop HP', $rows[1][3]);
-        $this->assertSame('2 unit', $rows[1][5]);
-        $this->assertSame('Menunggu Verifikasi', $rows[1][9]);
+        $this->assertSame('XI RPL 1', $rows[1][3]);
+        $this->assertSame('081234567890', $rows[1][4]);
+        $this->assertSame('Laptop HP', $rows[1][5]);
+        $this->assertSame('2 unit', $rows[1][7]);
+        $this->assertSame('Menunggu Verifikasi', $rows[1][11]);
         $this->assertCount(2, $rows);
     }
 }

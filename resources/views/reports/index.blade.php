@@ -61,6 +61,7 @@
                         <th>Kode</th>
                         <th>Nama Peminjam</th>
                         <th>Peran</th>
+                        <th>Nomor Telepon</th>
                         <th>Alat</th>
                         <th>Jumlah</th>
                         <th>Tgl Pinjam</th>
@@ -74,8 +75,9 @@
                         <tr>
                             <td>{{ $index + 1 }}</td>
                             <td>{{ $loan->inventory?->code ?? '-' }}</td>
-                            <td>{{ $loan->user?->name ?? '-' }}<br><small>{{ $loan->user?->role ?? 'Siswa' }}</small></td>
+                            <td>{{ $loan->user?->name ?? '-' }}<br><small>{{ $loan->user?->role ?? 'Siswa' }}@if($loan->user?->role === 'siswa') · Kelas: {{ $loan->user?->class ?? 'Belum diisi' }}@endif</small></td>
                             <td>{{ $loan->user?->role ?? 'Siswa' }}</td>
+                            <td>{{ $loan->borrower_phone ?? '-' }}</td>
                             <td>{{ $loan->inventory?->name ?? '-' }}</td>
                             <td>{{ $loan->quantity }} unit</td>
                             <td>{{ $loan->borrowed_at?->format('d M Y') ?? '-' }}</td>
@@ -97,7 +99,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="empty">Belum ada data peminjaman.</td>
+                            <td colspan="11" class="empty">Belum ada data peminjaman.</td>
                         </tr>
                     @endforelse
                 </tbody>

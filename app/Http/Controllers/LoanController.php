@@ -167,6 +167,8 @@ class LoanController extends Controller
                 'No',
                 'Nama Peminjam',
                 'Peran',
+                'Kelas',
+                'Nomor Telepon',
                 'Nama Inventaris',
                 'Kode Inventaris',
                 'Jumlah',
@@ -181,6 +183,8 @@ class LoanController extends Controller
                     $index + 1,
                     $this->safeSpreadsheetText($loan->user?->name ?? '-'),
                     $loan->user?->role ?? 'siswa',
+                    $this->safeSpreadsheetText($loan->user?->class ?? '-'),
+                    $this->safeSpreadsheetText($loan->borrower_phone ?? ''),
                     $this->safeSpreadsheetText($loan->inventory?->name ?? '-'),
                     $this->safeSpreadsheetText($loan->inventory?->code ?? '-'),
                     $loan->quantity.' unit',
@@ -269,9 +273,11 @@ class LoanController extends Controller
             'quantity' => $quantityRules,
             'borrowed_at' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
             'due_at' => ['required', 'date_format:Y-m-d', 'after_or_equal:borrowed_at'],
+            'borrower_phone' => ['required', 'string', 'min:8', 'max:30', 'regex:/\A\+?[0-9\s().-]+\z/'],
             'notes' => ['nullable', 'string', 'max:500'],
         ], [
             'quantity.max' => 'Siswa hanya dapat meminjam maksimal 3 unit barang dalam satu pengajuan.',
+            'borrower_phone.regex' => 'Masukkan nomor telepon yang valid.',
         ]);
         $inventory = Inventory::findOrFail($data['inventory_id']);
         if ($data['quantity'] > $inventory->available_stock) {

@@ -48,6 +48,14 @@
                 <input type="date" name="due_at" min="{{ old('borrowed_at', today()->toDateString()) }}" value="{{ old('due_at') }}" required>
             </label>
             <label class="wide">
+                Nomor telepon yang bisa dihubungi
+                <input type="tel" name="borrower_phone" value="{{ old('borrower_phone') }}" placeholder="Contoh: 081234567890" autocomplete="tel" maxlength="30" pattern="[+]?[0-9 ().-]{8,30}" required>
+                <small>Nomor ini akan digunakan petugas jika peminjaman terlambat dikembalikan.</small>
+                @error('borrower_phone')
+                    <small class="evidence-error">{{ $message }}</small>
+                @enderror
+            </label>
+            <label class="wide">
                 Catatan
                 <textarea name="notes" rows="4" placeholder="Contoh: untuk kegiatan praktik atau rapat kelas (opsional)">{{ old('notes') }}</textarea>
             </label>

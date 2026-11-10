@@ -29,6 +29,7 @@ class LoanEvidenceTest extends TestCase
             ->assertDontSee('name="borrowing_evidence"', false)
             ->assertDontSee('Bukti kondisi saat menerima barang')
             ->assertSee('name="borrowed_at"', false)
+            ->assertSee('name="borrower_phone"', false)
             ->assertSee('Dipinjam sampai')
             ->assertSee('data-available-stock="5"', false)
             ->assertSee('data-stock-toast', false)
@@ -43,6 +44,7 @@ class LoanEvidenceTest extends TestCase
             'quantity' => 1,
             'borrowed_at' => today()->toDateString(),
             'due_at' => today()->addDays(3)->toDateString(),
+            'borrower_phone' => '+62 812-3456-7890',
         ])->assertRedirect('/peminjaman');
 
         $loan = Loan::firstOrFail();
@@ -50,10 +52,13 @@ class LoanEvidenceTest extends TestCase
         $this->assertSame('pending', $loan->status);
         $this->assertSame(today()->toDateString(), $loan->borrowed_at->toDateString());
         $this->assertSame(today()->addDays(3)->toDateString(), $loan->due_at->toDateString());
+        $this->assertSame('+62 812-3456-7890', $loan->borrower_phone);
         $this->assertNull($loan->borrowing_evidence_path);
         $this->actingAs($admin)
             ->get('/peminjaman')
             ->assertOk()
+            ->assertSee('+62 812-3456-7890')
+            ->assertSee('href="tel:+6281234567890"', false)
             ->assertDontSee('Bukti peminjaman');
         $this->get('/dashboard')
             ->assertOk()
@@ -72,8 +77,30 @@ class LoanEvidenceTest extends TestCase
                 'quantity' => 1,
                 'borrowed_at' => today()->addDays(2)->toDateString(),
                 'due_at' => today()->addDay()->toDateString(),
+                'borrower_phone' => '081234567890',
             ])
             ->assertSessionHasErrors('due_at');
+
+        $this->assertDatabaseCount('loans', 0);
+    }
+
+    public function test_loan_request_requires_a_valid_contact_phone_number(): void
+    {
+        $student = User::factory()->create(['role' => 'siswa']);
+        $inventory = Inventory::factory()->create();
+        $loanData = [
+            'inventory_id' => $inventory->id,
+            'quantity' => 1,
+            'borrowed_at' => today()->toDateString(),
+            'due_at' => today()->addDays(3)->toDateString(),
+        ];
+
+        $this->actingAs($student)
+            ->post('/peminjaman', $loanData)
+            ->assertSessionHasErrors('borrower_phone');
+
+        $this->post('/peminjaman', $loanData + ['borrower_phone' => 'nomor-salah'])
+            ->assertSessionHasErrors('borrower_phone');
 
         $this->assertDatabaseCount('loans', 0);
     }
@@ -94,6 +121,7 @@ class LoanEvidenceTest extends TestCase
                 'quantity' => 2,
                 'borrowed_at' => today()->toDateString(),
                 'due_at' => today()->addDays(3)->toDateString(),
+                'borrower_phone' => '081234567890',
             ])
             ->assertRedirect()
             ->assertSessionHasErrors([
@@ -127,6 +155,7 @@ class LoanEvidenceTest extends TestCase
             'quantity' => 3,
             'borrowed_at' => today()->toDateString(),
             'due_at' => today()->addDays(3)->toDateString(),
+            'borrower_phone' => '081234567890',
         ])
             ->assertRedirect('/peminjaman');
 
@@ -151,6 +180,7 @@ class LoanEvidenceTest extends TestCase
                 'quantity' => 4,
                 'borrowed_at' => today()->toDateString(),
                 'due_at' => today()->addDays(3)->toDateString(),
+                'borrower_phone' => '081234567890',
             ])
             ->assertRedirect('/peminjaman/baru')
             ->assertSessionHasErrors([
@@ -181,6 +211,7 @@ class LoanEvidenceTest extends TestCase
             'quantity' => 4,
             'borrowed_at' => today()->toDateString(),
             'due_at' => today()->addDays(3)->toDateString(),
+            'borrower_phone' => '081234567890',
         ])->assertRedirect('/peminjaman');
 
         $this->assertDatabaseCount('loans', 1);

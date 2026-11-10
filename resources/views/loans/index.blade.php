@@ -36,7 +36,18 @@
                         <small>{{ $loan->inventory?->code ?? '-' }}</small>
                     </td>
                     @if(auth()->user()->role === 'admin')
-                        <td>{{ $loan->user?->name ?? '-' }}</td>
+                        <td>
+                            <strong>{{ $loan->user?->name ?? '-' }}</strong>
+                            <small>{{ ucfirst($loan->user?->role ?? 'siswa') }}</small>
+                            @if($loan->borrower_phone)
+                                <small>Telp: <a href="tel:{{ preg_replace('/[^0-9+]/', '', $loan->borrower_phone) }}">{{ $loan->borrower_phone }}</a></small>
+                            @else
+                                <small>Telp: -</small>
+                            @endif
+                            @if($loan->user?->role === 'siswa')
+                                <small>Kelas: {{ $loan->user?->class ?? 'Belum diisi' }}</small>
+                            @endif
+                        </td>
                     @endif
                     <td>{{ $loan->quantity }} unit</td>
                     <td>{{ $loan->borrowed_at?->format('d M Y') ?? '-' }}</td>

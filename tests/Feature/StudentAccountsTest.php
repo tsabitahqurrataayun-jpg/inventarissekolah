@@ -29,9 +29,11 @@ class StudentAccountsTest extends TestCase
         $this->post('/login', [
             'email' => 'siswa@sekolah.id',
             'password' => 'siswasmkn5',
+            'class' => 'XI RPL 1',
             'remember' => 'on',
         ])->assertRedirect('/dashboard');
 
         $this->assertAuthenticatedAs($student);
+        $this->assertSame('XI RPL 1', $student->fresh()->class);
     }
 }

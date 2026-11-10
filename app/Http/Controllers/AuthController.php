@@ -24,6 +24,7 @@ class AuthController extends Controller
         $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
+            'class' => ['nullable', 'string', 'max:100'],
             'remember' => ['accepted'],
         ]);
 
@@ -53,6 +54,20 @@ class AuthController extends Controller
             }
 
             return back()->withErrors(['email' => 'Email atau kata sandi tidak sesuai.'])->withInput();
+        }
+
+        $user = Auth::user();
+        if ($user->role === 'siswa') {
+            $studentClass = trim((string) $request->input('class'));
+            if ($studentClass === '') {
+                Auth::logout();
+
+                return back()
+                    ->withErrors(['class' => 'Kelas wajib diisi untuk akun siswa.'])
+                    ->withInput($request->only('email', 'class'));
+            }
+
+            $user->forceFill(['class' => $studentClass])->save();
         }
 
         RateLimiter::clear($this->studentLoginThrottleKey(Str::lower($request->string('email')->toString())));

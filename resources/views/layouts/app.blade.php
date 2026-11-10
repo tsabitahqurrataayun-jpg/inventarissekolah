@@ -278,6 +278,9 @@
                 grid-template-columns: repeat(2, minmax(120px, 1fr));
             }
         }
+        .user-shell .sidebar-user {
+            margin-top: auto;
+        }
     </style>
 </head>
 <body class="{{ auth()->user()->role === 'admin' ? 'admin-shell' : 'user-shell' }}">
@@ -297,9 +300,6 @@
                 <a class="nav-link {{ request()->routeIs('loans.index') ? 'active' : '' }}" href="{{ route('loans.index') }}"><span>↻</span>Pengajuan</a>
             @endif
         </nav>
-        @if(auth()->user()->role !== 'admin')
-            <div class="user-export"><small>EKSPOR DATA</small><div><button type="button">▣ PDF</button><button type="button">▤ Excel</button></div></div>
-        @endif
         <div class="sidebar-user"><span class="avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span><div><strong>{{ auth()->user()->name }}</strong><small>{{ auth()->user()->role === 'admin' ? 'Petugas' : ucfirst(auth()->user()->role) }}</small></div><form method="POST" action="{{ route('logout') }}">@csrf<button class="logout-button" title="Keluar">Keluar</button></form></div>
     </aside>
     <button type="button" class="mobile-nav-backdrop" aria-label="Tutup menu navigasi" hidden></button>

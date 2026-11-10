@@ -236,6 +236,7 @@
                 <th class="col-number">No.</th>
                 <th class="col-borrower">Nama Peminjam</th>
                 <th class="col-role">Peran</th>
+                <th>Nomor Telepon</th>
                 <th class="col-item">Nama Inventaris</th>
                 <th class="col-code">Kode</th>
                 <th class="col-quantity">Jumlah</th>
@@ -259,8 +260,9 @@
                 @endphp
                 <tr>
                     <td>{{ $index + 1 }}</td>
-                    <td>{{ $loan->user?->name ?? '-' }}</td>
+                    <td>{{ $loan->user?->name ?? '-' }}@if($loan->user?->role === 'siswa')<br><small>Kelas: {{ $loan->user?->class ?? 'Belum diisi' }}</small>@endif</td>
                     <td>{{ ucfirst($loan->user?->role ?? 'siswa') }}</td>
+                    <td>{{ $loan->borrower_phone ?? '-' }}</td>
                     <td>{{ $loan->inventory?->name ?? '-' }}</td>
                     <td>{{ $loan->inventory?->code ?? '-' }}</td>
                     <td>{{ $loan->quantity }} unit</td>
@@ -271,7 +273,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td class="empty-row" colspan="10">Tidak ada transaksi untuk filter ini.</td>
+                    <td class="empty-row" colspan="11">Tidak ada transaksi untuk filter ini.</td>
                 </tr>
             @endforelse
         </tbody>

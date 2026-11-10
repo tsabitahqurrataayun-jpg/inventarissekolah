@@ -22,6 +22,7 @@
                 <form method="POST" action="{{ route('login') }}" class="login-fields">
                     @csrf
                     <label>Username / Email<input type="email" name="email" value="{{ old('email') }}" placeholder="nama@sekolah.id" required autofocus></label>
+                    <label>Kelas (wajib untuk siswa)<input name="class" value="{{ old('class') }}" placeholder="Contoh: XI RPL 1" maxlength="100"></label>
                     <label>Password<div class="password-field"><input type="password" name="password" id="loginPassword" placeholder="Masukkan password" required><button type="button" class="toggle-password" aria-label="Lihat password" data-target="loginPassword">◉</button></div></label>
                     <div class="login-options"><label class="remember"><input type="checkbox" name="remember" required> <span>Ingat saya</span></label></div>
                     <button class="login-submit" type="submit">Login <span>→</span></button>

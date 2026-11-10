@@ -36,6 +36,7 @@ class LoginRememberRequiredTest extends TestCase
         $response = $this->from('/login')->post('/login', [
             'email' => $user->email,
             'password' => 'gurusmkn5',
+            'class' => 'XI RPL 1',
             'remember' => 'on',
         ]);
 
