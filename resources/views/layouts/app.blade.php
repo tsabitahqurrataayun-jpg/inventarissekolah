@@ -5,16 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ?? 'Inventaris' }} | Inventaris</title>
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @else
-        <link rel="stylesheet" href="{{ asset('app.css') }}">
-        @if(auth()->user()->role !== 'admin')
-            <link rel="stylesheet" href="{{ asset('user.css') }}">
-        @endif
+        @vite('resources/js/app.js')
+    @endif
+    <link rel="stylesheet" href="{{ asset('app.css') }}">
+    @if(auth()->user()->role !== 'admin')
+        <link rel="stylesheet" href="{{ asset('user.css') }}">
+    @endif
     <link rel="stylesheet" href="{{ asset('return-schedule.css') }}">
     <link rel="stylesheet" href="{{ asset('admin-actions.css') }}">
     <link rel="stylesheet" href="{{ asset('loan-request.css') }}">
-    @endif
     <link rel="stylesheet" href="{{ asset('return-date-dialog.css') }}">
     <link rel="stylesheet" href="{{ asset('dashboard-layout.css') }}">
     <link rel="stylesheet" href="{{ asset('inventory-page.css') }}">
